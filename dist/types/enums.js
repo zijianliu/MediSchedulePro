@@ -1,0 +1,59 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LogType = exports.NotificationStatus = exports.NotificationType = exports.RefundStatus = exports.AppointmentStatus = exports.TimeSlot = exports.UserRole = void 0;
+exports.UserRole = {
+    PATIENT: 'PATIENT',
+    DOCTOR: 'DOCTOR',
+    DEPT_ADMIN: 'DEPT_ADMIN',
+    FINANCE: 'FINANCE',
+    ADMIN: 'ADMIN',
+};
+exports.TimeSlot = {
+    MORNING: 'MORNING',
+    AFTERNOON: 'AFTERNOON',
+    EVENING: 'EVENING',
+};
+exports.AppointmentStatus = {
+    PENDING_PAYMENT: 'PENDING_PAYMENT',
+    CANCELLED: 'CANCELLED',
+    TIMEOUT: 'TIMEOUT',
+    PENDING_VISIT: 'PENDING_VISIT',
+    CHECKED_IN: 'CHECKED_IN',
+    IN_VISIT: 'IN_VISIT',
+    COMPLETED: 'COMPLETED',
+    MISSED: 'MISSED',
+    CLINIC_CANCELLED_REFUND: 'CLINIC_CANCELLED_REFUND',
+    REFUND_PROCESSING: 'REFUND_PROCESSING',
+    REFUNDED: 'REFUNDED',
+};
+exports.RefundStatus = {
+    PENDING: 'PENDING',
+    PROCESSING: 'PROCESSING',
+    COMPLETED: 'COMPLETED',
+    FAILED: 'FAILED',
+};
+exports.NotificationType = {
+    APPOINTMENT_SUCCESS: 'APPOINTMENT_SUCCESS',
+    APPOINTMENT_CANCELLED: 'APPOINTMENT_CANCELLED',
+    CLINIC_CANCELLED: 'CLINIC_CANCELLED',
+    REFUND_SUCCESS: 'REFUND_SUCCESS',
+};
+exports.NotificationStatus = {
+    PENDING: 'PENDING',
+    SENT: 'SENT',
+    FAILED: 'FAILED',
+};
+exports.LogType = {
+    SCHEDULE_CREATE: 'SCHEDULE_CREATE',
+    SCHEDULE_UPDATE: 'SCHEDULE_UPDATE',
+    SCHEDULE_CANCEL: 'SCHEDULE_CANCEL',
+    APPOINTMENT_CREATE: 'APPOINTMENT_CREATE',
+    APPOINTMENT_PAY: 'APPOINTMENT_PAY',
+    APPOINTMENT_CANCEL: 'APPOINTMENT_CANCEL',
+    APPOINTMENT_CHECKIN: 'APPOINTMENT_CHECKIN',
+    APPOINTMENT_MISSED: 'APPOINTMENT_MISSED',
+    APPOINTMENT_COMPLETED: 'APPOINTMENT_COMPLETED',
+    REFUND_PROCESS: 'REFUND_PROCESS',
+    REFUND_COMPLETE: 'REFUND_COMPLETE',
+};
+//# sourceMappingURL=enums.js.map
