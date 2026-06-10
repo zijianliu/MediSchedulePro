@@ -103,11 +103,15 @@ async function handleLogin() {
   
   try {
     const res = await API.post('/api/auth/login', { username, password });
-    AppState.setAuth(res.data.token, res.data.user);
+    if (!res || !res.token) {
+      showToast('登录失败：服务器响应异常', 'error');
+      return;
+    }
+    AppState.setAuth(res.token, res.user);
     showToast('登录成功', 'success');
     renderPage();
   } catch (error) {
-    showToast(error.message, 'error');
+    showToast(error.message || '登录失败，请稍后重试', 'error');
   }
 }
 

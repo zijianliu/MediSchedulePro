@@ -147,6 +147,9 @@ async function createAppointment(patientId, scheduleId, patientName, patientIdCa
                     },
                 });
                 return appointment;
+            }, {
+                maxWait: 10000,
+                timeout: 15000,
             });
             return result;
         }
