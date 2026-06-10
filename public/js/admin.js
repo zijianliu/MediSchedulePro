@@ -2,26 +2,28 @@ const AdminPages = {
   async renderScheduleManagement() {
     const date = getParam('date') || formatDate(new Date());
     const deptId = getParam('deptId') || '';
-    
+
     try {
       const params = [];
       if (date) params.push(`startDate=${date}&endDate=${date}`);
       if (deptId) params.push(`departmentId=${deptId}`);
-      
+
       const [schedulesRes, departmentsRes] = await Promise.all([
         API.get(`/api/schedules?includeCancelled=true&${params.join('&')}`),
         API.get('/api/departments'),
       ]);
-      
-      const schedules = schedulesRes.data;
-      const departments = departmentsRes.data;
-      
-      const deptOptions = departments.map(d => 
-        `<option value="${d.id}" ${d.id === deptId ? 'selected' : ''}>${escapeHtml(d.name)}</option>`
+
+      const schedules = schedulesRes || [];
+      const departments = departmentsRes || [];
+      const scheduleList = Array.isArray(schedules) ? schedules : (schedules.list || []);
+      const deptList = Array.isArray(departments) ? departments : (departments.list || []);
+
+      const deptOptions = (deptList || []).map(d =>
+        `<option value="${d.id}" ${d.id === deptId ? 'selected' : ''}>${escapeHtml(d.name || '')}</option>`
       ).join('');
-      
+
       let tableHtml = '';
-      if (schedules.length === 0) {
+      if (!scheduleList || scheduleList.length === 0) {
         tableHtml = `<div class="empty"><div class="icon">📅</div><p>暂无排班数据</p></div>`;
       } else {
         tableHtml = `<table class="table">
@@ -40,15 +42,19 @@ const AdminPages = {
             </tr>
           </thead>
           <tbody>`;
-        
-        schedules.forEach(s => {
+
+        (scheduleList || []).forEach(s => {
           const inv = s.slotInventory || {};
+          const deptName = (s.department && s.department.name) || '';
+          const doctorInfo = s.doctor || {};
+          const doctorName = doctorInfo.realName || doctorInfo.name || '';
+
           tableHtml += `
             <tr>
               <td>${formatDate(s.date)}</td>
               <td>${getTimeSlotText(s.timeSlot)}</td>
-              <td>${escapeHtml(s.department?.name || '')}</td>
-              <td>${escapeHtml(s.doctor?.name || '')}</td>
+              <td>${escapeHtml(deptName)}</td>
+              <td>${escapeHtml(doctorName)}</td>
               <td>${inv.totalSlots || 0}</td>
               <td>${inv.bookedSlots || 0}</td>
               <td>${inv.availableSlots || 0}</td>
@@ -59,23 +65,23 @@ const AdminPages = {
                 </span>
               </td>
               <td>
-                ${!s.isCancelled ? 
-                  `<button class="btn btn-danger btn-sm" onclick="AdminPages.showCancelSchedule('${s.id}')">停诊</button>` : 
+                ${!s.isCancelled ?
+                  `<button class="btn btn-danger btn-sm" onclick="AdminPages.showCancelSchedule('${s.id}')">停诊</button>` :
                   `<span style="color: #999;">已停诊</span>`}
               </td>
             </tr>
           `;
         });
-        
+
         tableHtml += '</tbody></table>';
       }
-      
+
       document.getElementById('content').innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
           <h2 style="margin: 0;">排班管理</h2>
           <button class="btn btn-primary" onclick="AdminPages.showCreateSchedule()">+ 新增排班</button>
         </div>
-        
+
         <div class="card">
           <div style="display: flex; gap: 16px; margin-bottom: 16px;">
             <div style="flex: 1;">
@@ -90,10 +96,10 @@ const AdminPages = {
               <input type="date" id="filterDate" value="${date}" onchange="AdminPages.filterSchedule()" class="form-control">
             </div>
           </div>
-          
+
           ${tableHtml}
         </div>
-        
+
         <div id="scheduleModal" class="card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
         </div>
       `;
@@ -101,27 +107,29 @@ const AdminPages = {
       showToast(error.message, 'error');
     }
   },
-  
+
   filterSchedule() {
     const date = document.getElementById('filterDate').value;
     const deptId = document.getElementById('filterDept').value;
     navigate('scheduleManage', { date, deptId });
   },
-  
+
   async showCreateSchedule() {
     try {
       const [departmentsRes, doctorsRes] = await Promise.all([
         API.get('/api/departments'),
         API.get('/api/doctors'),
       ]);
-      
-      const departments = departmentsRes.data;
-      const doctors = doctorsRes.data;
-      
-      const deptOptions = departments.map(d => 
-        `<option value="${d.id}">${escapeHtml(d.name)}</option>`
+
+      const departments = departmentsRes || [];
+      const doctors = doctorsRes || [];
+      const deptList = Array.isArray(departments) ? departments : (departments.list || []);
+      const doctorList = Array.isArray(doctors) ? doctors : (doctors.list || []);
+
+      const deptOptions = (deptList || []).map(d =>
+        `<option value="${d.id}">${escapeHtml(d.name || '')}</option>`
       ).join('');
-      
+
       const html = `
         <h3 style="margin-bottom: 20px;">新增排班</h3>
         <div class="form-group">
@@ -133,7 +141,10 @@ const AdminPages = {
         <div class="form-group">
           <label>医生</label>
           <select id="newDoctorId">
-            ${doctors.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('')}
+            ${(doctorList || []).map(d => {
+              const name = d.realName || d.name || '';
+              return `<option value="${d.id}">${escapeHtml(name)}</option>`;
+            }).join('')}
           </select>
         </div>
         <div class="form-group">
@@ -161,29 +172,33 @@ const AdminPages = {
           <button class="btn btn-primary" onclick="AdminPages.createSchedule()">确认创建</button>
         </div>
       `;
-      
+
       const modal = document.getElementById('scheduleModal');
       modal.innerHTML = html;
       modal.style.display = 'block';
-      
+
       AdminPages.loadDoctorsByDept();
     } catch (error) {
       showToast(error.message, 'error');
     }
   },
-  
+
   async loadDoctorsByDept() {
     const deptId = document.getElementById('newDeptId').value;
     try {
       const res = await API.get(`/api/doctors?departmentId=${deptId}`);
-      const doctors = res.data;
+      const doctors = res || [];
+      const doctorList = Array.isArray(doctors) ? doctors : (doctors.list || []);
       const select = document.getElementById('newDoctorId');
-      select.innerHTML = doctors.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+      select.innerHTML = (doctorList || []).map(d => {
+        const name = d.realName || d.name || '';
+        return `<option value="${d.id}">${escapeHtml(name)}</option>`;
+      }).join('');
     } catch (error) {
       showToast(error.message, 'error');
     }
   },
-  
+
   async createSchedule() {
     const departmentId = document.getElementById('newDeptId').value;
     const doctorId = document.getElementById('newDoctorId').value;
@@ -191,7 +206,7 @@ const AdminPages = {
     const timeSlot = document.getElementById('newTimeSlot').value;
     const maxSlots = parseInt(document.getElementById('newMaxSlots').value);
     const fee = parseFloat(document.getElementById('newFee').value);
-    
+
     try {
       await API.post('/api/schedules', {
         doctorId,
@@ -201,7 +216,7 @@ const AdminPages = {
         maxSlots,
         fee,
       });
-      
+
       showToast('排班创建成功', 'success');
       AdminPages.closeModal();
       renderPage();
@@ -209,7 +224,7 @@ const AdminPages = {
       showToast(error.message, 'error');
     }
   },
-  
+
   showCancelSchedule(scheduleId) {
     const html = `
       <h3 style="margin-bottom: 20px;">停诊确认</h3>
@@ -225,19 +240,19 @@ const AdminPages = {
         <button class="btn btn-danger" onclick="AdminPages.cancelSchedule('${scheduleId}')">确认停诊</button>
       </div>
     `;
-    
+
     const modal = document.getElementById('scheduleModal');
     modal.innerHTML = html;
     modal.style.display = 'block';
   },
-  
+
   async cancelSchedule(scheduleId) {
     const reason = document.getElementById('cancelReason').value.trim();
     if (!reason) {
       showToast('请填写停诊原因', 'warn');
       return;
     }
-    
+
     try {
       await API.post(`/api/schedules/${scheduleId}/cancel`, { reason });
       showToast('停诊操作成功', 'success');
@@ -247,21 +262,22 @@ const AdminPages = {
       showToast(error.message, 'error');
     }
   },
-  
+
   closeModal() {
     const modal = document.getElementById('scheduleModal');
     if (modal) {
       modal.style.display = 'none';
     }
   },
-  
+
   async renderRefundManagement() {
     try {
       const res = await API.get('/api/refunds');
-      const refunds = res.data;
-      
+      const refunds = res || [];
+      const refundList = Array.isArray(refunds) ? refunds : (refunds.list || []);
+
       let tableHtml = '';
-      if (refunds.length === 0) {
+      if (!refundList || refundList.length === 0) {
         tableHtml = `<div class="empty"><div class="icon">💰</div><p>暂无退款记录</p></div>`;
       } else {
         tableHtml = `<table class="table">
@@ -278,13 +294,14 @@ const AdminPages = {
             </tr>
           </thead>
           <tbody>`;
-        
-        refunds.forEach(r => {
+
+        (refundList || []).forEach(r => {
+          const patientName = (r.patient && (r.patient.realName || r.patient.name)) || '';
           tableHtml += `
             <tr>
-              <td>${r.id.substring(0, 8)}...</td>
-              <td>${r.appointmentId.substring(0, 8)}...</td>
-              <td>${escapeHtml(r.patient?.realName || '')}</td>
+              <td>${(r.id || '').substring(0, 8)}...</td>
+              <td>${(r.appointmentId || '').substring(0, 8)}...</td>
+              <td>${escapeHtml(patientName)}</td>
               <td style="color: #ff4d4f; font-weight: 600;">¥${r.amount}</td>
               <td>${escapeHtml(r.reason || '')}</td>
               <td>
@@ -294,7 +311,7 @@ const AdminPages = {
               </td>
               <td>${formatDateTime(r.createdAt)}</td>
               <td>
-                ${r.status === 'PENDING' ? 
+                ${r.status === 'PENDING' ?
                   `<button class="btn btn-primary btn-sm" onclick="AdminPages.processRefund('${r.id}')">处理退款</button>` :
                   r.status === 'PROCESSING' ?
                   `<button class="btn btn-success btn-sm" onclick="AdminPages.completeRefund('${r.id}')">完成退款</button>` :
@@ -303,10 +320,10 @@ const AdminPages = {
             </tr>
           `;
         });
-        
+
         tableHtml += '</tbody></table>';
       }
-      
+
       document.getElementById('content').innerHTML = `
         <h2 style="margin-bottom: 20px;">退款管理</h2>
         <div class="card">
@@ -317,7 +334,7 @@ const AdminPages = {
       showToast(error.message, 'error');
     }
   },
-  
+
   async processRefund(refundId) {
     try {
       await API.post(`/api/refunds/${refundId}/process`);
@@ -327,7 +344,7 @@ const AdminPages = {
       showToast(error.message, 'error');
     }
   },
-  
+
   async completeRefund(refundId) {
     try {
       await API.post(`/api/refunds/${refundId}/complete`);
@@ -337,14 +354,14 @@ const AdminPages = {
       showToast(error.message, 'error');
     }
   },
-  
+
   async renderLogs() {
     try {
       const res = await API.get('/api/logs/operation?pageSize=50');
-      const logs = res.data.list;
-      
+      const logs = (res && res.list) ? res.list : (Array.isArray(res) ? res : []);
+
       let tableHtml = '';
-      if (logs.length === 0) {
+      if (!logs || logs.length === 0) {
         tableHtml = `<div class="empty"><div class="icon">📋</div><p>暂无日志记录</p></div>`;
       } else {
         tableHtml = `<table class="table">
@@ -359,23 +376,24 @@ const AdminPages = {
             </tr>
           </thead>
           <tbody>`;
-        
-        logs.forEach(log => {
+
+        (logs || []).forEach(log => {
+          const operatorName = (log.operator && (log.operator.realName || log.operator.name)) || '';
           tableHtml += `
             <tr>
               <td>${formatDateTime(log.createdAt)}</td>
-              <td><span class="status-tag status-info">${log.type}</span></td>
-              <td>${escapeHtml(log.operator?.realName || '')}</td>
+              <td><span class="status-tag status-info">${log.type || ''}</span></td>
+              <td>${escapeHtml(operatorName)}</td>
               <td>${getRoleText(log.operatorRole)}</td>
-              <td>${log.targetType}</td>
+              <td>${log.targetType || ''}</td>
               <td>${escapeHtml(log.content || '-')}</td>
             </tr>
           `;
         });
-        
+
         tableHtml += '</tbody></table>';
       }
-      
+
       document.getElementById('content').innerHTML = `
         <h2 style="margin-bottom: 20px;">操作日志</h2>
         <div class="card">
@@ -386,36 +404,41 @@ const AdminPages = {
       showToast(error.message, 'error');
     }
   },
-  
+
   async renderNotifications() {
     try {
       const res = await API.get('/api/notifications');
-      const notifications = res.data.list || res.data;
-      
+      const notifications = (res && res.list) ? res.list : (Array.isArray(res) ? res : []);
+
       let html = '';
-      if (notifications.length === 0) {
+      if (!notifications || notifications.length === 0) {
         html = `<div class="empty"><div class="icon">🔔</div><p>暂无通知</p></div>`;
       } else {
-        notifications.forEach(n => {
+        (notifications || []).forEach(n => {
           html += `
             <div class="card" style="margin-bottom: 12px;">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                  <h4 style="margin-bottom: 8px;">${escapeHtml(n.title)}</h4>
-                  <p style="color: #666; font-size: 14px;">${escapeHtml(n.content)}</p>
+                  <h4 style="margin-bottom: 8px;">${escapeHtml(n.title || '')}</h4>
+                  <p style="color: #666; font-size: 14px;">${escapeHtml(n.content || '')}</p>
                 </div>
-                <span class="status-tag ${n.status === 'SENT' ? 'status-success' : 'status-warn'}">
+                <span class="status-tag ${n.status === 'SENT' ? 'status-success' : n.status === 'FAILED' ? 'status-danger' : 'status-warn'}">
                   ${n.status === 'SENT' ? '已发送' : n.status === 'FAILED' ? '发送失败' : '待发送'}
                 </span>
               </div>
               <div style="margin-top: 8px; font-size: 12px; color: #999;">
                 ${formatDateTime(n.createdAt)}
               </div>
+              ${n.status === 'FAILED' && n.failReason ? `
+              <div style="margin-top: 8px; font-size: 12px; color: #ff4d4f;">
+                失败原因：${escapeHtml(n.failReason)}
+              </div>
+              ` : ''}
             </div>
           `;
         });
       }
-      
+
       document.getElementById('content').innerHTML = `
         <h2 style="margin-bottom: 20px;">通知中心</h2>
         ${html}
