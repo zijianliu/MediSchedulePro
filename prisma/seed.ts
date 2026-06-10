@@ -27,7 +27,9 @@ async function main() {
     update: {},
     create: {
       name: '内科',
+      code: 'DEPT_NK',
       description: '内科诊疗',
+      status: 'ACTIVE',
     },
   });
 
@@ -36,7 +38,9 @@ async function main() {
     update: {},
     create: {
       name: '外科',
+      code: 'DEPT_WK',
       description: '外科诊疗',
+      status: 'ACTIVE',
     },
   });
 
@@ -45,7 +49,9 @@ async function main() {
     update: {},
     create: {
       name: '儿科',
+      code: 'DEPT_EK',
       description: '儿科诊疗',
+      status: 'ACTIVE',
     },
   });
 

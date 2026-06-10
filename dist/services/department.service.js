@@ -8,14 +8,21 @@ exports.getDepartmentById = getDepartmentById;
 exports.listDoctors = listDoctors;
 exports.getDoctorById = getDoctorById;
 exports.createDepartment = createDepartment;
+exports.updateDepartment = updateDepartment;
+exports.toggleDepartmentStatus = toggleDepartmentStatus;
 const prisma_1 = __importDefault(require("../utils/prisma"));
 const errors_1 = require("../utils/errors");
-async function listDepartments() {
+async function listDepartments(includeInactive = false) {
+    const where = {};
+    if (!includeInactive) {
+        where.status = 'ACTIVE';
+    }
     return prisma_1.default.department.findMany({
+        where,
         orderBy: { name: 'asc' },
         include: {
             _count: {
-                select: { doctors: true },
+                select: { doctors: true, schedules: true },
             },
         },
     });
@@ -25,7 +32,7 @@ async function getDepartmentById(id) {
         where: { id },
         include: {
             _count: {
-                select: { doctors: true },
+                select: { doctors: true, schedules: true },
             },
         },
     });
@@ -79,9 +86,57 @@ async function getDoctorById(id) {
     }
     return doctor;
 }
-async function createDepartment(name, description) {
+async function createDepartment(name, code, description) {
+    const existing = await prisma_1.default.department.findFirst({
+        where: {
+            OR: [
+                { name },
+                ...(code ? [{ code }] : []),
+            ],
+        },
+    });
+    if (existing) {
+        throw new errors_1.BadRequestError(existing.name === name ? '科室名称已存在' : '科室编码已存在');
+    }
     return prisma_1.default.department.create({
-        data: { name, description },
+        data: { name, code, description, status: 'ACTIVE' },
+    });
+}
+async function updateDepartment(id, data) {
+    const dept = await prisma_1.default.department.findUnique({ where: { id } });
+    if (!dept) {
+        throw new errors_1.NotFoundError('科室不存在');
+    }
+    if (data.name && data.name !== dept.name) {
+        const existing = await prisma_1.default.department.findFirst({ where: { name: data.name, id: { not: id } } });
+        if (existing) {
+            throw new errors_1.BadRequestError('科室名称已存在');
+        }
+    }
+    if (data.code && data.code !== dept.code) {
+        const existing = await prisma_1.default.department.findFirst({ where: { code: data.code, id: { not: id } } });
+        if (existing) {
+            throw new errors_1.BadRequestError('科室编码已存在');
+        }
+    }
+    return prisma_1.default.department.update({
+        where: { id },
+        data: {
+            ...(data.name !== undefined && { name: data.name }),
+            ...(data.code !== undefined && { code: data.code }),
+            ...(data.description !== undefined && { description: data.description }),
+        },
+    });
+}
+async function toggleDepartmentStatus(id) {
+    const dept = await prisma_1.default.department.findUnique({ where: { id } });
+    if (!dept) {
+        throw new errors_1.NotFoundError('科室不存在');
+    }
+    const newStatus = dept.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    return prisma_1.default.department.update({
+        where: { id },
+        data: { status: newStatus },
     });
 }
 //# sourceMappingURL=department.service.js.map

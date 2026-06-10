@@ -10,6 +10,8 @@ router.get('/doctors/list', departmentController.listDoctors);
 router.get('/doctors/:id', departmentController.getDoctor);
 router.get('/:id', departmentController.getDepartment);
 
-router.post('/', authMiddleware, requireRoles(UserRole.ADMIN), departmentController.createDepartment);
+router.post('/', authMiddleware, requireRoles(UserRole.ADMIN, UserRole.DEPT_ADMIN), departmentController.createDepartment);
+router.put('/:id', authMiddleware, requireRoles(UserRole.ADMIN, UserRole.DEPT_ADMIN), departmentController.updateDepartment);
+router.patch('/:id/toggle-status', authMiddleware, requireRoles(UserRole.ADMIN), departmentController.toggleDepartmentStatus);
 
 export default router;

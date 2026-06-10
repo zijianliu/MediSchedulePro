@@ -1,4 +1,198 @@
 const AdminPages = {
+  async renderDepartmentManagement() {
+    try {
+      const res = await API.get('/api/departments?includeInactive=true');
+      const departments = res || [];
+      const deptList = Array.isArray(departments) ? departments : (departments.list || []);
+
+      let tableHtml = '';
+      if (!deptList || deptList.length === 0) {
+        tableHtml = `
+          <div class="empty">
+            <div class="icon">🏥</div>
+            <p>暂无科室数据</p>
+            <p style="color: #999; font-size: 13px; margin-top: 8px;">请新增科室以开始使用排班和预约功能</p>
+            <button class="btn btn-primary" style="margin-top: 16px;" onclick="AdminPages.showCreateDepartment()">+ 新增科室</button>
+          </div>
+        `;
+      } else {
+        tableHtml = `<table class="table">
+          <thead>
+            <tr>
+              <th>科室名称</th>
+              <th>科室编码</th>
+              <th>描述</th>
+              <th>医生数</th>
+              <th>排班数</th>
+              <th>状态</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+        (deptList || []).forEach(d => {
+          const doctorCount = (d._count && d._count.doctors) || 0;
+          const scheduleCount = (d._count && d._count.schedules) || 0;
+          const isActive = d.status !== 'INACTIVE';
+
+          tableHtml += `
+            <tr>
+              <td style="font-weight: 600;">${escapeHtml(d.name || '')}</td>
+              <td><code>${escapeHtml(d.code || '-')}</code></td>
+              <td>${escapeHtml(d.description || '-')}</td>
+              <td>${doctorCount}</td>
+              <td>${scheduleCount}</td>
+              <td>
+                <span class="status-tag ${isActive ? 'status-success' : 'status-default'}">
+                  ${isActive ? '启用' : '停用'}
+                </span>
+              </td>
+              <td>${formatDateTime(d.createdAt)}</td>
+              <td>
+                <button class="btn btn-default btn-sm" onclick="AdminPages.showEditDepartment('${d.id}')">编辑</button>
+                <button class="btn ${isActive ? 'btn-warning' : 'btn-success'} btn-sm" style="margin-left: 8px;" onclick="AdminPages.toggleDepartment('${d.id}')">
+                  ${isActive ? '停用' : '启用'}
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+
+        tableHtml += '</tbody></table>';
+      }
+
+      document.getElementById('content').innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="margin: 0;">科室管理</h2>
+          <button class="btn btn-primary" onclick="AdminPages.showCreateDepartment()">+ 新增科室</button>
+        </div>
+        <div class="card">
+          ${tableHtml}
+        </div>
+        <div id="deptModal" class="card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+        </div>
+      `;
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  },
+
+  showCreateDepartment() {
+    const html = `
+      <h3 style="margin-bottom: 20px;">新增科室</h3>
+      <div class="form-group">
+        <label>科室名称 <span style="color: red;">*</span></label>
+        <input type="text" id="deptName" placeholder="如：内科、外科、儿科">
+      </div>
+      <div class="form-group">
+        <label>科室编码</label>
+        <input type="text" id="deptCode" placeholder="如：DEPT_NK">
+      </div>
+      <div class="form-group">
+        <label>描述</label>
+        <textarea id="deptDesc" rows="3" placeholder="科室介绍"></textarea>
+      </div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button class="btn btn-default" onclick="AdminPages.closeDeptModal()">取消</button>
+        <button class="btn btn-primary" onclick="AdminPages.createDepartment()">确认新增</button>
+      </div>
+    `;
+
+    const modal = document.getElementById('deptModal');
+    modal.innerHTML = html;
+    modal.style.display = 'block';
+  },
+
+  async createDepartment() {
+    const name = document.getElementById('deptName').value.trim();
+    const code = document.getElementById('deptCode').value.trim();
+    const description = document.getElementById('deptDesc').value.trim();
+
+    if (!name) {
+      showToast('请输入科室名称', 'warn');
+      return;
+    }
+
+    try {
+      await API.post('/api/departments', { name, code: code || undefined, description: description || undefined });
+      showToast('科室创建成功', 'success');
+      AdminPages.closeDeptModal();
+      AdminPages.renderDepartmentManagement();
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  },
+
+  async showEditDepartment(deptId) {
+    try {
+      const dept = await API.get(`/api/departments/${deptId}`);
+
+      const html = `
+        <h3 style="margin-bottom: 20px;">编辑科室</h3>
+        <div class="form-group">
+          <label>科室名称 <span style="color: red;">*</span></label>
+          <input type="text" id="editDeptName" value="${escapeHtml(dept.name || '')}">
+        </div>
+        <div class="form-group">
+          <label>科室编码</label>
+          <input type="text" id="editDeptCode" value="${escapeHtml(dept.code || '')}">
+        </div>
+        <div class="form-group">
+          <label>描述</label>
+          <textarea id="editDeptDesc" rows="3">${escapeHtml(dept.description || '')}</textarea>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="btn btn-default" onclick="AdminPages.closeDeptModal()">取消</button>
+          <button class="btn btn-primary" onclick="AdminPages.updateDepartment('${deptId}')">保存修改</button>
+        </div>
+      `;
+
+      const modal = document.getElementById('deptModal');
+      modal.innerHTML = html;
+      modal.style.display = 'block';
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  },
+
+  async updateDepartment(deptId) {
+    const name = document.getElementById('editDeptName').value.trim();
+    const code = document.getElementById('editDeptCode').value.trim();
+    const description = document.getElementById('editDeptDesc').value.trim();
+
+    if (!name) {
+      showToast('请输入科室名称', 'warn');
+      return;
+    }
+
+    try {
+      await API.put(`/api/departments/${deptId}`, { name, code: code || undefined, description: description || undefined });
+      showToast('科室更新成功', 'success');
+      AdminPages.closeDeptModal();
+      AdminPages.renderDepartmentManagement();
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  },
+
+  async toggleDepartment(deptId) {
+    try {
+      await API.patch(`/api/departments/${deptId}/toggle-status`);
+      showToast('科室状态已更新', 'success');
+      AdminPages.renderDepartmentManagement();
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  },
+
+  closeDeptModal() {
+    const modal = document.getElementById('deptModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  },
+
   async renderScheduleManagement() {
     const date = getParam('date') || formatDate(new Date());
     const deptId = getParam('deptId') || '';
@@ -10,7 +204,7 @@ const AdminPages = {
 
       const [schedulesRes, departmentsRes] = await Promise.all([
         API.get(`/api/schedules?includeCancelled=true&${params.join('&')}`),
-        API.get('/api/departments'),
+        API.get('/api/departments?includeInactive=true'),
       ]);
 
       const schedules = schedulesRes || [];
@@ -117,7 +311,7 @@ const AdminPages = {
   async showCreateSchedule() {
     try {
       const [departmentsRes, doctorsRes] = await Promise.all([
-        API.get('/api/departments'),
+        API.get('/api/departments?includeInactive=true'),
         API.get('/api/doctors'),
       ]);
 

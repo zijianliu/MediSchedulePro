@@ -42,6 +42,8 @@ router.get('/', departmentController.listDepartments);
 router.get('/doctors/list', departmentController.listDoctors);
 router.get('/doctors/:id', departmentController.getDoctor);
 router.get('/:id', departmentController.getDepartment);
-router.post('/', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN), departmentController.createDepartment);
+router.post('/', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN), departmentController.createDepartment);
+router.put('/:id', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN, enums_1.UserRole.DEPT_ADMIN), departmentController.updateDepartment);
+router.patch('/:id/toggle-status', auth_1.authMiddleware, (0, auth_1.requireRoles)(enums_1.UserRole.ADMIN), departmentController.toggleDepartmentStatus);
 exports.default = router;
 //# sourceMappingURL=department.routes.js.map

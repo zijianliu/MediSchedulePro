@@ -23,6 +23,7 @@ export async function createTestDepartment(name?: string) {
     data: {
       name: name || `测试科室_${Date.now()}`,
       description: '测试科室描述',
+      status: 'ACTIVE',
     },
   });
 }

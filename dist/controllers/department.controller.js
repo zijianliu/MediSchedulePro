@@ -38,10 +38,13 @@ exports.getDepartment = getDepartment;
 exports.listDoctors = listDoctors;
 exports.getDoctor = getDoctor;
 exports.createDepartment = createDepartment;
+exports.updateDepartment = updateDepartment;
+exports.toggleDepartmentStatus = toggleDepartmentStatus;
 const departmentService = __importStar(require("../services/department.service"));
 async function listDepartments(req, res, next) {
     try {
-        const departments = await departmentService.listDepartments();
+        const includeInactive = req.query.includeInactive === 'true';
+        const departments = await departmentService.listDepartments(includeInactive);
         res.json(departments);
     }
     catch (error) {
@@ -80,9 +83,30 @@ async function getDoctor(req, res, next) {
 }
 async function createDepartment(req, res, next) {
     try {
-        const { name, description } = req.body;
-        const department = await departmentService.createDepartment(name, description);
+        const { name, code, description } = req.body;
+        const department = await departmentService.createDepartment(name, code, description);
         res.status(201).json(department);
+    }
+    catch (error) {
+        next(error);
+    }
+}
+async function updateDepartment(req, res, next) {
+    try {
+        const { id } = req.params;
+        const { name, code, description } = req.body;
+        const department = await departmentService.updateDepartment(id, { name, code, description });
+        res.json(department);
+    }
+    catch (error) {
+        next(error);
+    }
+}
+async function toggleDepartmentStatus(req, res, next) {
+    try {
+        const { id } = req.params;
+        const department = await departmentService.toggleDepartmentStatus(id);
+        res.json(department);
     }
     catch (error) {
         next(error);

@@ -3,7 +3,8 @@ import * as departmentService from '../services/department.service';
 
 export async function listDepartments(req: Request, res: Response, next: any) {
   try {
-    const departments = await departmentService.listDepartments();
+    const includeInactive = req.query.includeInactive === 'true';
+    const departments = await departmentService.listDepartments(includeInactive);
     res.json(departments);
   } catch (error) {
     next(error);
@@ -42,9 +43,30 @@ export async function getDoctor(req: Request, res: Response, next: any) {
 
 export async function createDepartment(req: Request, res: Response, next: any) {
   try {
-    const { name, description } = req.body;
-    const department = await departmentService.createDepartment(name, description);
+    const { name, code, description } = req.body;
+    const department = await departmentService.createDepartment(name, code, description);
     res.status(201).json(department);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateDepartment(req: Request, res: Response, next: any) {
+  try {
+    const { id } = req.params;
+    const { name, code, description } = req.body;
+    const department = await departmentService.updateDepartment(id, { name, code, description });
+    res.json(department);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function toggleDepartmentStatus(req: Request, res: Response, next: any) {
+  try {
+    const { id } = req.params;
+    const department = await departmentService.toggleDepartmentStatus(id);
+    res.json(department);
   } catch (error) {
     next(error);
   }

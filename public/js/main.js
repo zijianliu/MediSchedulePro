@@ -140,6 +140,7 @@ function renderMainLayout() {
     ];
   } else if (role === 'DEPT_ADMIN' || role === 'ADMIN') {
     menuItems = [
+      { key: 'deptManage', label: '科室管理', icon: '🏥' },
       { key: 'scheduleManage', label: '排班管理', icon: '📅' },
       { key: 'refundManage', label: '退款处理', icon: '💰' },
       { key: 'logs', label: '操作日志', icon: '📋' },
@@ -186,7 +187,7 @@ function getDefaultPage() {
   const role = AppState.user?.role;
   if (role === 'PATIENT') return 'departments';
   if (role === 'DOCTOR') return 'todaySchedule';
-  if (role === 'DEPT_ADMIN' || role === 'ADMIN') return 'scheduleManage';
+  if (role === 'DEPT_ADMIN' || role === 'ADMIN') return 'deptManage';
   if (role === 'FINANCE') return 'refundManage';
   return 'departments';
 }
@@ -241,6 +242,9 @@ function renderPage() {
     }
   } else if (role === 'DEPT_ADMIN' || role === 'ADMIN') {
     switch (page) {
+      case 'deptManage':
+        AdminPages.renderDepartmentManagement();
+        break;
       case 'scheduleManage':
         AdminPages.renderScheduleManagement();
         break;
@@ -254,7 +258,7 @@ function renderPage() {
         AdminPages.renderNotifications();
         break;
       default:
-        AdminPages.renderScheduleManagement();
+        AdminPages.renderDepartmentManagement();
     }
   } else if (role === 'FINANCE') {
     switch (page) {

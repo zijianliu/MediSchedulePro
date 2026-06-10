@@ -24,9 +24,9 @@ export declare function createAppointment(patientId: string, scheduleId: string,
     departmentId: string;
     createdAt: Date;
     updatedAt: Date;
+    status: string;
     patientId: string;
     scheduleId: string;
-    status: string;
     fee: number;
     queueNumber: number | null;
     patientName: string | null;
@@ -40,9 +40,9 @@ export declare function payAppointment(appointmentId: string, patientId: string)
     departmentId: string;
     createdAt: Date;
     updatedAt: Date;
+    status: string;
     patientId: string;
     scheduleId: string;
-    status: string;
     fee: number;
     queueNumber: number | null;
     patientName: string | null;
@@ -77,9 +77,9 @@ export declare function cancelAppointment(appointmentId: string, userId: string,
     departmentId: string;
     createdAt: Date;
     updatedAt: Date;
+    status: string;
     patientId: string;
     scheduleId: string;
-    status: string;
     fee: number;
     queueNumber: number | null;
     patientName: string | null;
@@ -127,8 +127,8 @@ export declare function getAppointmentById(id: string, userId: string, userRole:
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        patientId: string;
         status: string;
+        patientId: string;
         appointmentId: string;
         operatorId: string | null;
         reason: string;
@@ -147,9 +147,9 @@ export declare function getAppointmentById(id: string, userId: string, userRole:
     departmentId: string;
     createdAt: Date;
     updatedAt: Date;
+    status: string;
     patientId: string;
     scheduleId: string;
-    status: string;
     fee: number;
     queueNumber: number | null;
     patientName: string | null;
@@ -186,9 +186,9 @@ export declare function listPatientAppointments(patientId: string, status?: stri
     departmentId: string;
     createdAt: Date;
     updatedAt: Date;
+    status: string;
     patientId: string;
     scheduleId: string;
-    status: string;
     fee: number;
     queueNumber: number | null;
     patientName: string | null;

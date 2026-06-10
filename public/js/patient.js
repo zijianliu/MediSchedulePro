@@ -7,16 +7,21 @@ const PatientPages = {
     try {
       const res = await API.get('/api/departments');
       const departments = res || [];
+      const deptList = Array.isArray(departments) ? departments : (departments.list || []);
 
-      let html = `
-        <h2 style="margin-bottom: 20px;">选择科室</h2>
-        <div class="grid grid-3">
-      `;
+      let html = `<h2 style="margin-bottom: 20px;">选择科室</h2>`;
 
-      if (!departments || departments.length === 0) {
-        html = `<div class="empty"><div class="icon">🏥</div><p>暂无科室信息</p></div>`;
+      if (!deptList || deptList.length === 0) {
+        html += `
+          <div class="empty">
+            <div class="icon">🏥</div>
+            <p>暂无可预约科室</p>
+            <p style="color: #999; font-size: 13px; margin-top: 8px;">请等待管理员添加科室信息</p>
+          </div>
+        `;
       } else {
-        (departments || []).forEach(dept => {
+        html += '<div class="grid grid-3">';
+        (deptList || []).forEach(dept => {
           html += `
             <div class="dept-card" onclick="PatientPages.selectDepartment('${dept.id}')">
               <h3>${escapeHtml(dept.name || '')}</h3>

@@ -81,6 +81,13 @@ const API = {
     });
   },
   
+  patch(url, data) {
+    return this.request(url, {
+      method: 'PATCH',
+      body: JSON.stringify(data || {}),
+    });
+  },
+  
   delete(url) {
     return this.request(url, { method: 'DELETE' });
   }

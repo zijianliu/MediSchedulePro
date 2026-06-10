@@ -30,9 +30,9 @@ export declare function listRefunds(operatorId: string, operatorRole: string, op
         departmentId: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         patientId: string;
         scheduleId: string;
-        status: string;
         fee: number;
         queueNumber: number | null;
         patientName: string | null;
@@ -49,8 +49,8 @@ export declare function listRefunds(operatorId: string, operatorRole: string, op
     id: string;
     createdAt: Date;
     updatedAt: Date;
-    patientId: string;
     status: string;
+    patientId: string;
     appointmentId: string;
     operatorId: string | null;
     reason: string;
@@ -89,9 +89,9 @@ export declare function getRefundById(id: string, operatorId: string, operatorRo
         departmentId: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         patientId: string;
         scheduleId: string;
-        status: string;
         fee: number;
         queueNumber: number | null;
         patientName: string | null;
@@ -108,8 +108,8 @@ export declare function getRefundById(id: string, operatorId: string, operatorRo
     id: string;
     createdAt: Date;
     updatedAt: Date;
-    patientId: string;
     status: string;
+    patientId: string;
     appointmentId: string;
     operatorId: string | null;
     reason: string;
@@ -121,9 +121,9 @@ export declare function processRefund(refundId: string, operatorId: string, oper
         departmentId: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         patientId: string;
         scheduleId: string;
-        status: string;
         fee: number;
         queueNumber: number | null;
         patientName: string | null;
@@ -136,8 +136,8 @@ export declare function processRefund(refundId: string, operatorId: string, oper
     id: string;
     createdAt: Date;
     updatedAt: Date;
-    patientId: string;
     status: string;
+    patientId: string;
     appointmentId: string;
     operatorId: string | null;
     reason: string;
@@ -149,9 +149,9 @@ export declare function completeRefund(refundId: string, operatorId: string, ope
         departmentId: string;
         createdAt: Date;
         updatedAt: Date;
+        status: string;
         patientId: string;
         scheduleId: string;
-        status: string;
         fee: number;
         queueNumber: number | null;
         patientName: string | null;
@@ -164,8 +164,8 @@ export declare function completeRefund(refundId: string, operatorId: string, ope
     id: string;
     createdAt: Date;
     updatedAt: Date;
-    patientId: string;
     status: string;
+    patientId: string;
     appointmentId: string;
     operatorId: string | null;
     reason: string;
